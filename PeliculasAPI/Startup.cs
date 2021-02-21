@@ -34,7 +34,7 @@ namespace PeliculasAPI
             services.AddHttpContextAccessor();
             services.AddDbContext<ApplicationDBContext>(options =>
                 options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
-            services.AddControllers();
+            services.AddControllers().AddNewtonsoftJson();
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "PeliculasAPI", Version = "v1" });
