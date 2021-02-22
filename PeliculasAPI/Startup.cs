@@ -29,8 +29,8 @@ namespace PeliculasAPI
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddAutoMapper(typeof(Startup));
-            //services.AddTransient<IAlmacenadorArchivos, AlmacenadorArchivosAzure>();
-            services.AddTransient<IAlmacenadorArchivos, AlmacenadorArchivosLocal>();
+            services.AddTransient<IAlmacenadorArchivos, AlmacenadorArchivosAzure>();
+            //services.AddTransient<IAlmacenadorArchivos, AlmacenadorArchivosLocal>();
             services.AddHttpContextAccessor();
             services.AddDbContext<ApplicationDBContext>(options =>
                 options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
