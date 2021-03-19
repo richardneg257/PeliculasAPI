@@ -18,7 +18,7 @@ namespace PeliculasAPI
             modelBuilder.Entity<PeliculasActores>()
                 .HasKey(x => new { x.ActorId, x.PeliculaId });
             modelBuilder.Entity<PeliculasGeneros>()
-                .HasKey(x => new { x.GeneroId, x.PeliculasId });
+                .HasKey(x => new { x.GeneroId, x.PeliculaId });
 
             base.OnModelCreating(modelBuilder);
         }
