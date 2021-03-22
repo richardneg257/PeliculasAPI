@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PeliculasAPI.DTOs;
 using PeliculasAPI.Entidades;
+using PeliculasAPI.Helpers;
 using PeliculasAPI.Servicios;
 using System;
 using System.Collections.Generic;
@@ -30,9 +31,52 @@ namespace PeliculasAPI.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<List<PeliculaDTO>>> Get()
+        public async Task<ActionResult<PeliculasIndexDTO>> Get()
         {
-            var peliculas = await context.Peliculas.ToListAsync();
+            var top = 5;
+            var hoy = DateTime.Today;
+
+            var proximosEstrenos = await context.Peliculas
+                .Where(x => x.FechaEstreno > hoy)
+                .OrderBy(x => x.FechaEstreno)
+                .ToListAsync();
+            var enCines = await context.Peliculas
+                .Where(x => x.EnCines)
+                .Take(top)
+                .ToListAsync();
+
+            var resultado = new PeliculasIndexDTO();
+            resultado.FuturosEstrenos = mapper.Map<List<PeliculaDTO>>(proximosEstrenos);
+            resultado.EnCines = mapper.Map<List<PeliculaDTO>>(enCines);
+
+            return resultado;
+        }
+
+        [HttpGet("filtro")]
+        public async Task<ActionResult<List<PeliculaDTO>>> Filtrar([FromQuery] FiltroPeliculasDTO filtroPeliculasDTO)
+        {
+            var peliculasQueryable = context.Peliculas.AsQueryable();
+
+            if (!string.IsNullOrEmpty(filtroPeliculasDTO.Titulo))
+                peliculasQueryable = peliculasQueryable.Where(x => x.Titulo.Contains(filtroPeliculasDTO.Titulo));
+
+            if (filtroPeliculasDTO.EnCines)
+                peliculasQueryable = peliculasQueryable.Where(x => x.EnCines);
+
+            if (filtroPeliculasDTO.ProximosEstrenos)
+            {
+                var hoy = DateTime.Today;
+                peliculasQueryable = peliculasQueryable.Where(x => x.FechaEstreno > hoy);
+            }
+
+            if (filtroPeliculasDTO.GeneroId != 0)
+                peliculasQueryable = peliculasQueryable.Where(x => x.PeliculasGeneros.Select(y => y.GeneroId)
+                                                      .Contains(filtroPeliculasDTO.GeneroId));
+
+            await HttpContext.InsertarParametrosPaginacion(peliculasQueryable, filtroPeliculasDTO.CantidadRegistrosPorPagina);
+
+            var peliculas = await peliculasQueryable.Paginar(filtroPeliculasDTO.Paginacion).ToListAsync();
+
             return mapper.Map<List<PeliculaDTO>>(peliculas);
         }
 
@@ -70,7 +114,7 @@ namespace PeliculasAPI.Controllers
         {
             if (pelicula.PeliculasActores != null)
             {
-                for(int i = 0; i < pelicula.PeliculasActores.Count; i++)
+                for (int i = 0; i < pelicula.PeliculasActores.Count; i++)
                 {
                     pelicula.PeliculasActores[i].Orden = i;
                 }
